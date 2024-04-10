@@ -1,27 +1,33 @@
+<!-- weather_form.html -->
+
 {% extends "main.html" %}
 
 {% block content %}
+    <div class="container">
+        <h1 class="mt-5 mb-4 text-center">Temperaturas</h1>
 
-    <h1>Temperaturas</h1>
+        <!-- Botão para criar novo dado de clima -->
+        <a href="{% url 'weather-create' %}" class="btn btn-primary btn-lg d-block mx-auto mb-4" style="width: 300px;">Adicionar Dado de Clima</a>
 
-    <div class="d-flex justify-content-start flex-wrap">
-
-        {% for weather in weathers %}
-        <div class="col-md-4 p-2">
-          <div class="card">
-            <div class="card-header">
-                Temperatura: {{ weather.temperature }}
-            </div>
-            <div class="card-body">
-                <p class="card-text">
-                    Data: {{ weather.date }} <br />
-                    Cidade
-                </p>
-            </div>
-          </div>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for weather in weathers %}
+                <div class="col">
+                    <div class="card h-100 rounded-3 shadow">
+                        <div class="card-header bg-primary text-white text-center">
+                            <h5 class="card-title mb-0">Temperatura: {{ weather.temperature }}°C</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text mb-0">
+                                <strong>Data:</strong> {{ weather.date }} <br>
+                                <strong>Cidade:</strong> {{ weather.city }}
+                            </p>
+                        </div>
+                        <div class="card-footer bg-light text-muted small text-center">
+                            <small>Última atualização: {{ weather.last_updated }}</small>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-
-        {% endfor %}
-
     </div>
 {% endblock content %}
