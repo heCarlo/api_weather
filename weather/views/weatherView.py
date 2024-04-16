@@ -1,139 +1,177 @@
 from datetime import datetime
 from random import choice, randrange
-from django.views import View
 from django.shortcuts import render, redirect
+from django.views import View
 from ..repositories.weatherRepository import WeatherRepository
 import uuid
 
 class WeatherView(View):
+    """
+    Exibe a página inicial com os dados meteorológicos.
+
+    Método HTTP GET:
+    - Retorna todos os dados meteorológicos se não houver filtro por cidade.
+    - Retorna os dados meteorológicos filtrados por cidade se houver um parâmetro 'city' na requisição GET.
+    """
     def get(self, request):
         repository = WeatherRepository(collectionName='weathers')
         city = request.GET.get('city')
-        if city:
-            weathers = repository.filter_by_city(city)
-        else:
-            weathers = repository.get_all()
+        weathers = repository.filter_by_city(city) if city else repository.get_all()
         return render(request, "home.html", {"weathers": weathers})
 
 class WeatherGenerate(View):
+    """
+    Gera dados meteorológicos aleatórios e insere no banco de dados.
+
+    Método HTTP GET:
+    - Gera um conjunto de dados meteorológicos aleatórios.
+    - Insere os dados gerados no banco de dados.
+    - Redireciona para a página de visualização de dados meteorológicos.
+    
+    Método HTTP POST:
+    - Extrai os dados meteorológicos da requisição POST.
+    - Insere os dados extraídos no banco de dados.
+    - Redireciona para a página de visualização de dados meteorológicos.
+    """
     def get(self, request):
         repository = WeatherRepository(collectionName='weathers')
-        weather_data = {
-            "uuid": str(uuid.uuid4()),  # Gerando um novo UUID
-            "temperature": randrange(17, 40),  # Temperatura aleatória entre 17 e 40
-            "city": choice(["Sorocaba", "Alumínio", "Mairinque"]),  # Escolha aleatória de cidade
-            "atmospheric_pressure": randrange(800, 1200),  # Exemplo de pressão atmosférica aleatória
-            "humidity": randrange(30, 90),  # Exemplo de umidade aleatória
-            "weather": choice(["Ensolarado", "Nublado", "Chuvoso"]),  # Escolha aleatória de clima
-            "date": datetime.now(),
-            "last_updated": datetime.now()  
-        }
+        weather_data = self.generate_random_weather()
         repository.insert(weather_data)
         return redirect('weather-view')
-    
+
     def post(self, request):
+        weather_data = self.extract_weather_data_from_request(request)
+        repository = WeatherRepository(collectionName='weathers')
+        repository.insert(weather_data)
+        return redirect('weather-view')
+
+    def generate_random_weather(self):
+        return {
+            "uuid": str(uuid.uuid4()),
+            "temperature": randrange(17, 40),
+            "city": choice(["Sorocaba", "Alumínio", "Mairinque"]),
+            "atmospheric_pressure": randrange(800, 1200),
+            "humidity": randrange(30, 90),
+            "weather": choice(["Ensolarado", "Nublado", "Chuvoso"]),
+            "date": datetime.now(),
+            "last_updated": datetime.now()
+        }
+
+    def extract_weather_data_from_request(self, request):
+        return {
+            "uuid": str(uuid.uuid4()),
+            "temperature": request.POST.get('temperature'),
+            "city": request.POST.get('city'),
+            "atmospheric_pressure": request.POST.get('atmospheric_pressure'),
+            "humidity": request.POST.get('humidity'),
+            "weather": request.POST.get('weather'),
+            "date": datetime.strptime(request.POST.get('date'), '%d-%m-%Y'),
+            "last_updated": datetime.now()
+        }
+
+class WeatherUpdate(View):
+    """
+    Atualiza dados meteorológicos existentes no banco de dados.
+
+    Método HTTP POST:
+    - Extrai os dados meteorológicos da requisição POST.
+    - Atualiza os dados no banco de dados com base no UUID fornecido.
+    - Redireciona para a página de visualização de dados meteorológicos.
+    """
+    def extract_weather_data_from_request(self, request):
         temperature = request.POST.get('temperature')
         city = request.POST.get('city')
         atmospheric_pressure = request.POST.get('atmospheric_pressure')
         humidity = request.POST.get('humidity')
         weather = request.POST.get('weather')
-        date = request.POST.get('date')
-        
-        # Convertendo a string de data para um objeto datetime
-        date = datetime.strptime(date, '%d-%m-%Y')
-        
-        repository = WeatherRepository(collectionName='weathers')
+
         weather_data = {
-            "uuid": str(uuid.uuid4()),  # Gerando um novo UUID
             "temperature": temperature,
             "city": city,
             "atmospheric_pressure": atmospheric_pressure,
             "humidity": humidity,
             "weather": weather,
-            "date": date.strftime('%d/%m/%Y %H:%M:%S'),  # Formato 24h
-            "last_updated": datetime.now().strftime('%d/%m/%Y %H:%M:%S')  
         }
-        repository.insert(weather_data)
-        return redirect('weather-view')
-    
-class WeatherUpdate(View):
+        return weather_data
+
     def post(self, request, uuid):
         try:
-            temperature = request.POST.get('temperature')
-            city = request.POST.get('city')
-            atmospheric_pressure = request.POST.get('atmospheric_pressure')
-            humidity = request.POST.get('humidity')
-            weather = request.POST.get('weather')
-            date = request.POST.get('date')
+            weather_data = self.extract_weather_data_from_request(request)
+            repository = WeatherRepository(collectionName='weathers')
             
-            # Convertendo a string de data para um objeto datetime
-            date = datetime.strptime(date, '%Y-%m-%d')
-            
-            repository = WeatherRepository(collection_name='weathers')
             filter_query = {"uuid": uuid}
-            update_query = {
-                "temperature": temperature,
-                "city": city,
-                "atmospheric_pressure": atmospheric_pressure,
-                "humidity": humidity,
-                "weather": weather,
-                "date": date,  # Removendo a formatação da data
-                "last_updated": datetime.now()  
-            }
+            update_query = weather_data
+            
             repository.update(filter_query, update_query)
             return redirect('weather-view')
         except Exception as e:
-            # Lidar com qualquer exceção aqui
-            # Por exemplo, você pode querer registrar o erro para depuração
-            print(f"Ocorreu um erro: {e}")
-            # Redirecionar de volta para a página do formulário com uma mensagem de erro
-            return redirect('weather-view')  # Redirecionamento temporário
+            print(f"An error occurred: {e}")
+            return redirect('weather-view')
+
 
 class WeatherDelete(View):
+    """
+    Exclui dados meteorológicos do banco de dados.
+
+    Método HTTP POST:
+    - Exclui os dados com base no UUID fornecido.
+    - Redireciona para a página de visualização de dados meteorológicos.
+    """
     def post(self, request, uuid):
         repository = WeatherRepository(collectionName='weathers')
-        query = {"uuid": uuid}
-        repository.delete(query)
+        repository.delete({"uuid": uuid})
         return redirect('weather-view')
 
 class WeatherReset(View):
+    """
+    Reinicia todos os dados meteorológicos no banco de dados.
+
+    Método HTTP POST:
+    - Exclui todos os dados meteorológicos do banco de dados.
+    - Redireciona para a página de visualização de dados meteorológicos.
+    """
     def post(self, request):
         repository = WeatherRepository(collectionName='weathers')
         repository.delete_all()
         return redirect('weather-view')
 
 class WeatherCreate(View):
-    def post(self, request):
-        temperature = request.POST.get('temperature')
+    """
+    Cria dados meteorológicos e insere no banco de dados.
+
+    Método HTTP POST:
+    - Extrai os dados meteorológicos da requisição POST.
+    - Insere os dados extraídos no banco de dados.
+    - Redireciona para a página de visualização de dados meteorológicos.
+    """
+    def extract_weather_data_from_request(self, request):
+        temperature = int(request.POST.get('temperature'))
         city = request.POST.get('city')
-        atmospheric_pressure = request.POST.get('atmospheric_pressure')
-        humidity = request.POST.get('humidity')
+        atmospheric_pressure = int(request.POST.get('atmospheric_pressure'))
+        humidity = int(request.POST.get('humidity'))
         weather = request.POST.get('weather')
-        date = request.POST.get('date')
-        
+
+        date = datetime.now()
+        weather_uuid = str(uuid.uuid4())
+
+        weather_data = {
+            "uuid": weather_uuid,
+            "temperature": temperature,
+            "city": city,
+            "atmospheric_pressure": atmospheric_pressure,
+            "humidity": humidity,
+            "weather": weather,
+            "date": date,
+            "last_updated": date    
+        }
+        return weather_data
+
+    def post(self, request):
         try:
-            # Inicializando a variável uuid antes do processamento do formulário
-            weather_uuid = str(uuid.uuid4())  # Gerando um novo UUID
-            
-            # Convertendo a string de data para um objeto datetime
-            date = datetime.strptime(date, '%Y-%m-%d')
-            
+            weather_data = self.extract_weather_data_from_request(request)
             repository = WeatherRepository(collectionName='weathers')
-            weather_data = {
-                "uuid": weather_uuid,
-                "temperature": temperature,
-                "city": city,
-                "atmospheric_pressure": atmospheric_pressure,
-                "humidity": humidity,
-                "weather": weather,
-                "date": date.strftime('%d/%m/%Y %H:%M:%S'),  # Formato 24h
-                "last_updated": datetime.now().strftime('%d/%m/%Y %H:%M:%S')  
-            }
             repository.insert(weather_data)
             return redirect('weather-view')
         except Exception as e:
-            # Lidar com qualquer exceção aqui
-            # Por exemplo, você pode querer registrar o erro para depuração
-            print(f"Ocorreu um erro: {e}")
-            # Redirecionar de volta para a página do formulário com uma mensagem de erro
-            return render(request, "weather_create.html", {"error": "Ocorreu um erro ao processar o formulário. Por favor, tente novamente."})
+            print(f"An error occurred: {e}")
+            return redirect('weather-view')
