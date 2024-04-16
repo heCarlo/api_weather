@@ -25,7 +25,7 @@ class WeatherRepository:
     def insert(self, document):
         self.get_collection().insert_one(document)
     
-        def update(self, filter_query, update_query):
+    def update(self, filter_query, update_query):
             self.get_collection().update_one(filter_query, {"$set": update_query})
     
     def delete(self, query):
