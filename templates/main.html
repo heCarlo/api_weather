@@ -61,7 +61,7 @@
                 <a class="navbar-brand" href="{% url 'weather-view' %}">Weather APP</a>
                 <ul class="navbar-nav flex-row">
                     <li class="nav-item me-2">
-                        <a class="nav-link" href="#" id="add-weather-data">Add Data</a>
+                        <a class="nav-link" href="#" id="add-weather-data">Create</a>
                     </li>
                     <li class="nav-item me-2">
                         <a class="nav-link" href="#" id="generate-weather-data">Generate</a>
@@ -139,10 +139,6 @@
                             <input type="number" class="form-control" id="temperature" name="temperature" required>
                         </div>
                         <div class="mb-3">
-                            <label for="date" class="form-label">Date</label>
-                            <input type="date" class="form-control" id="date" name="date" required value="{{ weather.date|date:'Y-m-d' }}">
-                        </div>
-                        <div class="mb-3">
                             <label for="city" class="form-label">Cidade</label>
                             <input type="text" class="form-control" id="city" name="city" required>
                         </div>
@@ -180,10 +176,6 @@
                         <div class="mb-3">
                             <label for="temperature" class="form-label">Temperature</label>
                             <input type="number" class="form-control" id="temperature" name="temperature">
-                        </div>
-                        <div class="mb-3">
-                            <label for="date" class="form-label">Date</label>
-                            <input type="date" class="form-control" id="date" name="date" value="{{ weather.date|date:'Y-m-d' }}">
                         </div>
                         <div class="mb-3">
                             <label for="city" class="form-label">Cidade</label>
