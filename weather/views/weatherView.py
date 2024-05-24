@@ -84,6 +84,7 @@ class WeatherUpdate(View):
         atmospheric_pressure = request.POST.get('atmospheric_pressure')
         humidity = request.POST.get('humidity')
         weather = request.POST.get('weather')
+        date = datetime.now()
 
         weather_data = {
             "temperature": temperature,
@@ -91,6 +92,7 @@ class WeatherUpdate(View):
             "atmospheric_pressure": atmospheric_pressure,
             "humidity": humidity,
             "weather": weather,
+            "last_updated": date
         }
         return weather_data
 
