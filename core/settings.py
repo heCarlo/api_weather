@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,9 +26,39 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt',
     'rest_framework',
     'weather',
+    'user',
 ]
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+# Configurações específicas para o Simple JWT
+SIMPLE_JWT = {
+    # Define o tempo de expiração do token de acesso (em minutos)
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    # Define o tempo de expiração do token de atualização (em dias)
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    # Configura a chave secreta para assinar os tokens
+    'SIGNING_KEY': '1234',
+    # Configura se os tokens devem ser codificados usando a compactação JWT
+    'ALGORITHM': 'HS256',
+    # Configura se os tokens devem ser encriptados
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    # Configura se o usuário deve ter um identificador exclusivo no token
+    'USER_ID_FIELD': 'uuid',
+    # Configura se o token deve incluir informações do usuário
+    'USER_ID_CLAIM': 'uuid',
+    # Configura se o token deve incluir informações do usuário
+    'USER_ID_CLAIM': 'uuid',
+    # Configura se o token deve incluir informações do usuário
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -36,7 +67,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -66,7 +97,8 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 
-MONGO_CONNECTION_STRING = 'mongodb+srv://carlosgfkp:123@cluster0.cqoroep.mongodb.net/'
+# MONGO_CONNECTION_STRING = 'mongodb+srv://carlosgfkp:123@cluster0.cqoroep.mongodb.net/'
+MONGO_CONNECTION_STRING = 'mongodb://localhost:27017'
 MONGO_DATABASE_NAME = 'weather'
 
 DATABASES = {
@@ -76,8 +108,8 @@ DATABASES = {
         'NAME': MONGO_DATABASE_NAME,
         'CLIENT': {
             'host': MONGO_CONNECTION_STRING,
-            'username': 'carlosgfkp',
-            'password': '123',
+            # 'username': 'carlosgfkp',
+            # 'password': '123',
         }
     }
 }
